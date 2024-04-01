@@ -14,6 +14,10 @@ parser.add_argument('-m', '--methods', nargs='+',
                     help='Method name(s) to test, e.g. eth_getBalance (all methods by default).')
 parser.add_argument('-n', '--networks', nargs='+',
                     help='Network subdomain to test (all test networks by default).')
+parser.add_argument('-v', '--verbose', help='output the response for the request',
+                    action="store_true")
+parser.add_argument('-q', '--quiet', help='Don\'t be verbose',
+                    action="store_true")
 parser.add_argument('-k', '--api_key', metavar='INFURA_API_KEY', default=None,
                     help='Infura API Key to use (INFURA_API_KEY env var used by default).')
 
@@ -24,6 +28,11 @@ if InfuraApiKey == None:
    print('Error: Use --api_key to provide a valid Infura API key', file=sys.stderr)
    parser.print_help()
    exit(1)
+
+verbose = args.verbose
+quiet = args.quiet
+if quiet:
+   verbose = False
 
 defaultNetworks = [
     "sepolia",
@@ -146,6 +155,9 @@ else:
       if not item['method'] in problemMethods:
          theMethods.append(item)
 
+if not quiet and not verbose:
+  verbose = methods_on_cli
+
 # Print summary header row
 print("method,", ', '.join(theNetworks))
 
@@ -174,8 +186,8 @@ for m in theMethods:
 
         jResponse = json.loads(response.text)
 
-        # Print more detailed info if methods are specified on command line with '-m'
-        if methods_on_cli:
+        # Print more detailed info if methods are specified on command line with '-m' or if '-v'
+        if verbose:
           if jResponse.get('error') == None:
             print(f'{n}: {jResponse["result"]}')
           else:
