@@ -23,31 +23,32 @@ parser.add_argument('-k', '--api_key', metavar='INFURA_API_KEY', default=None,
 
 args = parser.parse_args()
 
-InfuraApiKey = args.api_key or os.environ.get("INFURA_API_KEY") or os.environ.get("ETH")
+InfuraApiKey = args.api_key or os.environ.get(
+    "INFURA_API_KEY") or os.environ.get("ETH")
 if InfuraApiKey == None:
-   print('Error: Use --api_key to provide a valid Infura API key', file=sys.stderr)
-   parser.print_help()
-   exit(1)
+    print('Error: Use --api_key to provide a valid Infura API key', file=sys.stderr)
+    parser.print_help()
+    exit(1)
 
 verbose = args.verbose
 quiet = args.quiet
 if quiet:
-   verbose = False
+    verbose = False
 
 defaultNetworks = [
     "sepolia",
-    # "goerli",
-    "arbitrum-sepolia",
-    "avalanche-fuji",
-    # "base-goerli",
-    "blast-sepolia",
-    "celo-alfajores",
-    # "bnbsmartchain-testnet",  # project ID does not have access to binance
+    "holesky",
     "linea-sepolia",
+    "polygon-amoy",
+    "base-sepolia",
+    "blast-sepolia",
+    # "bnbsmartchain-testnet",  # project ID does not have access to binance
     "optimism-sepolia",
+    "arbitrum-sepolia",
     "palm-testnet",
-    "polygon-mumbai",
-    "starknet-goerli"
+    "avalanche-fuji",
+    "starknet-sepolia",
+    "celo-alfajores",
 ]
 theNetworks = args.networks or defaultNetworks
 
@@ -56,7 +57,7 @@ defaultMethods = [
     {'method': 'eth_accounts', 'params': []},
     {'method': 'eth_blockNumber', 'params': []},
     {'method': 'eth_call', 'params': [{"from": f"{os.environ.get('SIGNER_ACCOUNT')}", "to": "0xd46e8dd67c5d32be8058bb8eb970870f07244567", "gas": "0x76c0",
-        "gasPrice": "0x9184e72a000", "value": "0x9184e72a", "data": "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"}, "latest"]},
+                                       "gasPrice": "0x9184e72a000", "value": "0x9184e72a", "data": "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"}, "latest"]},
     # eth_call err: insufficient funds for gas * price + value
     {'method': 'eth_chainId', 'params': []},
     # {'method': 'eth_coinbase', 'params': []},   # Not supported on any endpoint
@@ -64,7 +65,7 @@ defaultMethods = [
         {"from": "0xaeA8F8f781326bfE6A7683C2BD48Dd6AA4d3Ba63", "data": "0x608060806080608155"}, "pending"]},
     # many errors
     {"method": "eth_estimateGas", "params": [{"from": "0xb60e8dd61c5d32be8058bb8eb970870f07233155", "to": "0xd46e8dd67c5d32be8058bb8eb970870f07244567", "gas": "0x76c0",
-        "gasPrice": "0x9184e72a000", "value": "0x9184e72a", "data": "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"}]},
+                                              "gasPrice": "0x9184e72a000", "value": "0x9184e72a", "data": "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"}]},
     # insufficient funds
     {"method": "eth_feeHistory", "params": ["0x5", "latest", [20, 30]]},
     {"method": "eth_gasPrice", "params": []},
@@ -84,7 +85,7 @@ defaultMethods = [
     {"method": "eth_getProof", "id": 1, "params": ["0x7F0d15C7FAae65896648C8273B6d7E43f58Fa842", [
         "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"], "latest"]},
     {"method": "eth_getStorageAt", "params": ["0x295a70b2de5e3953354a6a8344e616ed314d7251",
-        "0x6661e9d6d8b923d5bbaab1b96e1dd51ff6ea2a93520fdc9eb75d059238b8c5e9", "latest"]},  # "latest" is more resilient across chains
+                                              "0x6661e9d6d8b923d5bbaab1b96e1dd51ff6ea2a93520fdc9eb75d059238b8c5e9", "latest"]},  # "latest" is more resilient across chains
     {"method": "eth_getTransactionByBlockHashAndIndex", "params": [
         "0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35", "0x0"]},
     {"method": "eth_getTransactionByBlockNumberAndIndex",
@@ -117,23 +118,28 @@ defaultMethods = [
     # eth_sendTransaction not supported by Infura
     # eth_sign not supported by Infura
     {"method": "eth_submitWork", "params": ["0x0000000000000001", "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-        "0xD1FE5700000000000000000000000000D1FE5700000000000000000000000000"]},
+                                            "0xD1FE5700000000000000000000000000D1FE5700000000000000000000000000"]},
     {"method": "eth_syncing", "params": []},
     {'method': 'eth_newFilter', 'params': [{"topics": [
         "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]}]},
-        # Other Filter methods - need to save this returned filter ID for them to use
+    # Other Filter methods - need to save this returned filter ID for them to use
     {"method": "net_listening", "params": []},
     {"method": "net_peerCount", "params": []},
     {"method": "net_version", "params": []},
-    # Subcription methods?
-    # Trace methods?
+    # Subscription methods - Not yet implemented - note websocket connections only!
+    # {"method": "eth_subscribe", "params": ["newHeads"]},
+    # Trace methods
+    {"method": "trace_block", "params": ["0x6"], "id": 1},
+    # Debug methods
+    {"method": "debug_traceBlockByNumber", "params": [
+        "0x4d0c", {"tracer": "callTracer"}]},
     {"method": "web3_clientVersion", "params": []},
 ]
 
 # These methods need eth in the source account to work properly, or nonce has to be correct, etc.
 # So they are hard to test generically
 problemMethods = [
-   'eth_call', 'eth_createAccessList', 'eth_estimateGas', 'eth_sendRawTransaction',
+    'eth_call', 'eth_createAccessList', 'eth_estimateGas', 'eth_sendRawTransaction',
 ]
 
 # If any methods are provided on command line, then use them, otherwise use sanitized default list
@@ -143,20 +149,20 @@ if args.methods:
     # copy {method, params} across from the defaultMethods list
     for m in args.methods:
         try:
-          theMethods.append(
-              next(item for item in defaultMethods if item['method'] == m))
+            theMethods.append(
+                next(item for item in defaultMethods if item['method'] == m))
         except:
-          print(f'Error: method "{m}" is not known', file=sys.stderr)
-          exit(1)
+            print(f'Error: method "{m}" is not known', file=sys.stderr)
+            exit(1)
     methods_on_cli = True  # maybe print extra output about the specific method calls
 else:
     # copy all {method, params} across from the defaultMethod list, strip out problematic ones
     for item in defaultMethods:
-      if not item['method'] in problemMethods:
-         theMethods.append(item)
+        if not item['method'] in problemMethods:
+            theMethods.append(item)
 
 if not quiet and not verbose:
-  verbose = methods_on_cli
+    verbose = methods_on_cli
 
 # Print summary header row
 print("method,", ', '.join(theNetworks))
@@ -168,52 +174,62 @@ for m in theMethods:
     for n in theNetworks:
         url = f'https://{n}.infura.io/v3/{InfuraApiKey}'
         try:
-          response = requests.post(url, data=json.dumps(m))
+            response = requests.post(url, data=json.dumps(m))
         except:
-          print(f"Error: Can't connect: {url}", file=sys.stderr)
-          exit(1)
+            print(f"Error: Can't connect: {url}", file=sys.stderr)
+            exit(1)
 
         if response.status_code == 401:
-          print(
-              'Error: Status code 401, use --api_key to provide a valid Infura API key', file=sys.stderr)
-          exit(1)
+            if "invalid" in response.text:
+                print(
+                    f'Error: use --api_key to provide a valid Infura API key', file=sys.stderr)
+                exit(1)
+            elif "does not have access" in response.text:
+                print(
+                    f'Error: "Project ID does not have access to {n}', file=sys.stderr)
+                exit(1)
+            else:
+                print("ERROR: invalid response",
+                      response.text, file=sys.stderr)
+                exit(1)
 
         # Ignore 400 because many networks return it together with a valid error response we can interpret later
         # Networks that do this: near, starknet, avalanche, base.
         if response.status_code != 200 and response.status_code != 400:
-          print(f'Error: {n}, {m}, Status code: {response.status_code}, URL: {url}', file=sys.stderr)
-          exit(1)
+            print(
+                f'Error: {n}, {m}, Status code: {response.status_code}, URL: {url}', file=sys.stderr)
+            exit(1)
 
         jResponse = json.loads(response.text)
 
         # Print more detailed info if methods are specified on command line with '-m' or if '-v'
         if verbose:
-          if jResponse.get('error') == None:
-            print(f'{n}: {jResponse["result"]}')
-          else:
-            print(f'{n}: {jResponse["error"]}')
-
+            if jResponse.get('error') == None:
+                print(f'{n}: {jResponse["result"]}')
+            else:
+                print(f'{n}: {jResponse["error"]}')
 
         if jResponse.get('error') == None:
             summary += ', Y'
         else:
             error_code = jResponse['error']['code']
             if n == 'palm-testnet' and m['method'] == 'eth_getBlockByHash' and error_code == -32600:
-               # Palm is unique and returns an error instead of success and 'None' if the block hash is not found
-               summary += ', Y'
+                # Palm is unique and returns an error if the block hash is not found
+                # Other networks return success and 'None' instead
+                summary += ', Y'
             elif n == 'celo-alfajores' and error_code == -32000:
-               # celo uses this generic error code for "Not implemented"
-              summary += ', N(-32000)'
+                # celo uses this generic error code for "Not implemented"
+                summary += ', N(-32000)'
             elif n == 'base-goerli' and error_code == -32602:
-               # base uses 32602 for "Not found" (and 32601 for eth_protocolVersion does not exist?!)
-              summary += ', N(-32602)'
+                # base uses 32602 for "Not found" (and 32601 for eth_protocolVersion does not exist?!)
+                summary += ', N(-32602)'
             elif error_code == -32004:
-               # This non-standard error code returned by our proxy for "method not supported"
-               summary += ', N(-32004)'
+                # This non-standard error code returned by our proxy for "method not supported"
+                summary += ', N(-32004)'
             elif error_code == -32601:
-               # This is the common (correct?) error code for "Method not found" from the node
-               summary += ', N'
+                # This is the common (correct?) error code for "Method not found" from the node
+                summary += ', N'
             else:
-              summary += f', {error_code}'
+                summary += f', {error_code}'
 
     print(summary)
